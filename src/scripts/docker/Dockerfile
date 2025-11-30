@@ -28,7 +28,7 @@ RUN mkdir -p $DEPENDENCIES_DIR
 # Download, build and install GMP.
 RUN echo "[+] Download, build and install GMP" && \
     cd $DEPENDENCIES_DIR && \
-    curl -LO https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz && \
+    curl -LO https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz && \
     tar xf gmp-6.3.0.tar.xz && \
     cd gmp-6.3.0 && \
     ./configure --prefix=/usr/local/gmp --disable-assembly && \
