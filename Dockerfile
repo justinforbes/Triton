@@ -24,7 +24,8 @@ RUN DEBIAN_FRONTEND="noninteractive" \
         pkg-config \
         python3-pip \
         python3-venv \
-        tar && \
+        tar \
+        libmpfr-dev && \
     apt clean
 
 ENV VIRTUAL_ENV=/Triton-venv

@@ -9,7 +9,7 @@ RUN yum install -y \
         less \
         ninja-build \
         sudo \
-        wget
+        wget \
 
 # LLVM dependencies.
 RUN yum install -y \
@@ -24,6 +24,14 @@ ENV SOURCE_DIR=/src
 
 # Create directory for dependencies.
 RUN mkdir -p $DEPENDENCIES_DIR
+
+# Download, build and install GMP.
+RUN curl -LO https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz && \
+    tar xf gmp-6.3.0.tar.xz && \
+    cd gmp-6.3.0 && \
+    ./configure --prefix=/usr/local/gmp --disable-assembly && \
+    make -j$(nproc) && \
+    make install
 
 # Download, build and install Bitwuzla.
 RUN echo "[+] Download, build and install Bitwuzla" && \
