@@ -9,7 +9,7 @@ RUN yum install -y \
         less \
         ninja-build \
         sudo \
-        wget \
+        wget
 
 # LLVM dependencies.
 RUN yum install -y \
