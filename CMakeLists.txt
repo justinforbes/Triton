@@ -149,7 +149,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 # Custom cmake search
-#list(APPEND CMAKE_MODULE_PATH "${TRITON_ROOT}/CMakeModules/")
+list(APPEND CMAKE_MODULE_PATH "${TRITON_ROOT}/CMakeModules/")
 
 # Find Z3
 if(Z3_INTERFACE)
@@ -199,7 +199,7 @@ endif()
 
 # Find Capstone
 message(STATUS "Compiling with Capstone")
-find_package(CAPSTONE 5 REQUIRED)
+find_package(CAPSTONE 5 CONFIG REQUIRED)
 message(STATUS "CAPSTONE version: ${CAPSTONE_VERSION}")
 if(TARGET capstone::capstone)
     link_libraries(capstone::capstone)
