@@ -104,21 +104,21 @@ class CMakeBuild(build_ext):
             build_args += ['--', '-j4']
 
         elif platform.system() == "Windows":
-            if BUILDTOOLS == "vs2022":
+            if BUILDTOOLS == vs2022:
                 cmake_args += [
                     "-G Visual Studio 17 2022",
                 ]
                 build_args += ["--", "/m:4"]
             else:
                 assert os.getenv('COMPILER_DIR'), "COMPILER_DIR(clang or clang_cl) env not found"
-                if BUILDTOOLS == "clang":
+                if BUILDTOOLS == clang:
                     cmake_args += [
                         "-DCMAKE_C_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang.exe",
                         "-DCMAKE_CXX_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang++.exe",
                         "-DCMAKE_RC_COMPILER=" +  os.getenv('COMPILER_DIR') + "/llvm-rc.exe",
                         "-G Ninja",
                     ]
-                if BUILDTOOLS == "clang_cl":
+                if BUILDTOOLS == clang_cl:
                     cmake_args += [
                         "-DCMAKE_C_COMPILER= " +  os.getenv('COMPILER_DIR') + "/clang-cl.exe",
                         "-DCMAKE_CXX_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang-cl.exe",
