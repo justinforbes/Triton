@@ -38,21 +38,19 @@ RUN echo "[+] Download, build and install GMP" && \
     curl -LO https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz && \
     tar xf gmp-6.3.0.tar.xz && \
     cd gmp-6.3.0 && \
-    ./configure --prefix=/usr/local/gmp --disable-assembly --enable-cxx && \
+    ./configure --disable-assembly --enable-cxx && \
     make -j$(nproc) && \
     make install
 
 
 RUN echo "[+] Download, build and install mpfr" && \
     cd $DEPENDENCIES_DIR && \
-    curl -LO https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.1.tar.xz \
-    && tar xf mpfr-4.2.1.tar.xz \
-    && cd mpfr-4.2.1 \
-    && ./configure --prefix=/usr/local/mpfr --with-gmp=/usr/local/gmp \
-    && make -j$(nproc) && make install
-
-ENV PKG_CONFIG_PATH=/usr/local/gmp/lib/pkgconfig:/usr/local/mpfr/lib/pkgconfig:$PKG_CONFIG_PATH
-
+    curl -LO https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.1.tar.xz && \
+    tar xf mpfr-4.2.1.tar.xz && \
+    cd mpfr-4.2.1 && \
+    ./configure && \
+    make -j$(nproc) && make install
+    
 # Download, build and install Bitwuzla.
 RUN echo "[+] Download, build and install Bitwuzla" && \
     cd $DEPENDENCIES_DIR && \
