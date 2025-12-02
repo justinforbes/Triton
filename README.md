@@ -183,6 +183,18 @@ You can use cmake to generate the .sln file of libTriton.
   -DCAPSTONE_LIBRARIES="C:/Users/jonathan/Works/Tools/capstone-5.0.1-win64/capstone.lib" ..
 ```
 
+You can use setup.py to generate the debug version of triton.pyd on Windows.
+
+```console
+> git clone https://github.com/JonathanSalwan/Triton.git
+> cd Triton
+> $env:COMPILER_DIR="C:/deps/llvm/llvm2116r/bin"
+> $env:CMAKE_PREFIX_PATH="C:/deps/llvm/llvm-project-21.1.6.src/install/lib/cmake/llvm;C:/code/cxx-common-cmake/build/install"
+> python_d -m build --wheel
+> python_d -m pip install (Get-ChildItem .\dist\triton_library*)
+
+```
+
 However, if you prefer to directly download the precompiled library, check out our AppVeyor's [artefacts](https://ci.appveyor.com/project/JonathanSalwan/triton/history).
 Note that if you use AppVeyor's artefacts, you probably have to install the [Visual C++ Redistributable](https://www.microsoft.com/en-US/download/details.aspx?id=30679)
 packages for Visual Studio 2012.

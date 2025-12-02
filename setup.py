@@ -20,8 +20,23 @@ from setuptools.command.build_ext import build_ext
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
 VERSION_PATCH = 0
+ON = "ON"
+OFF = "OFF"
+
+clang = "clang" 
+clang_cl = "clang_cl"
+vs2022 = "vs2022"
+Release = "Release"
+Debug = "Debug"
 
 RELEASE_CANDIDATE = 4
+Z3_INTERFACE = ON
+LLVM_INTERFACE = OFF
+BITWUZLA_INTERFACE = OFF
+BOOST_INTERFACE = OFF
+
+BUILDTOOLS = vs2022 # clang or clang_cl or vs2022
+CMAKE_BUILD_TYPE = Release # Release or Debug
 
 VERSION = f'{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}' + \
             f'rc{RELEASE_CANDIDATE}' if RELEASE_CANDIDATE else ''
@@ -59,7 +74,7 @@ class CMakeBuild(build_ext):
         cmake_args = [
             # General arguments.
             '-DPYTHON_EXECUTABLE=' + sys.executable,
-            '-DCMAKE_BUILD_TYPE=Release',
+            '-DCMAKE_BUILD_TYPE='+ CMAKE_BUILD_TYPE,
         ]
 
         # Interfaces can be defined using environment variables.
@@ -70,7 +85,7 @@ class CMakeBuild(build_ext):
         #   BITWUZLA_INTERFACE=Off
         #   BOOST_INTERFACE=Off
         #
-        for arg, value in [('Z3_INTERFACE', 'On'), ('LLVM_INTERFACE', 'Off'), ('BITWUZLA_INTERFACE', 'Off'), ('BOOST_INTERFACE', 'Off')]:
+        for arg, value in [('Z3_INTERFACE', Z3_INTERFACE), ('LLVM_INTERFACE', LLVM_INTERFACE), ('BITWUZLA_INTERFACE', BITWUZLA_INTERFACE), ('BOOST_INTERFACE', BOOST_INTERFACE)]:
             if os.getenv(arg):
                 cmake_args += [f'-D{arg}=' + os.getenv(arg)]
             else:
@@ -89,11 +104,27 @@ class CMakeBuild(build_ext):
             build_args += ['--', '-j4']
 
         elif platform.system() == "Windows":
-            cmake_args += [
-                '-G Visual Studio 17 2022',
-            ]
-            build_args += ['--', '/m:4']
-
+            if BUILDTOOLS == vs2022:
+                cmake_args += [
+                    "-G Visual Studio 17 2022",
+                ]
+                build_args += ["--", "/m:4"]
+            else:
+                assert os.getenv('COMPILER_DIR'), "COMPILER_DIR(clang or clang_cl) env not found"
+                if BUILDTOOLS == clang:
+                    cmake_args += [
+                        "-DCMAKE_C_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang.exe",
+                        "-DCMAKE_CXX_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang++.exe",
+                        "-DCMAKE_RC_COMPILER=" +  os.getenv('COMPILER_DIR') + "/llvm-rc.exe",
+                        "-G Ninja",
+                    ]
+                if BUILDTOOLS == clang_cl:
+                    cmake_args += [
+                        "-DCMAKE_C_COMPILER= " +  os.getenv('COMPILER_DIR') + "/clang-cl.exe",
+                        "-DCMAKE_CXX_COMPILER=" +  os.getenv('COMPILER_DIR') + "/clang-cl.exe",
+                        "-DCMAKE_RC_COMPILER=" +  os.getenv('COMPILER_DIR') + "/llvm-rc.exe",
+                        "-G Ninja",
+                    ]
         else:
             raise Exception(f'Platform not supported: {platform.system()}')
 
@@ -123,7 +154,6 @@ class CMakeBuild(build_ext):
 
         if os.getenv('BITWUZLA_INCLUDE_DIRS'):
             cmake_args += ['-DBITWUZLA_INCLUDE_DIRS=' + os.getenv('BITWUZLA_INCLUDE_DIRS')]
-
         # Custom Capstone paths.
         if os.getenv('CAPSTONE_LIBRARIES'):
             cmake_args += ['-DCAPSTONE_LIBRARIES=' + os.getenv('CAPSTONE_LIBRARIES')]
@@ -155,11 +185,11 @@ class CMakeBuild(build_ext):
             os.makedirs(self.build_lib)
 
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
-        subprocess.check_call(['cmake', '--build', '.', '--config', 'Release', '--target', 'python-triton'] + build_args, cwd=self.build_temp)
+        subprocess.check_call(['cmake', '--build', '.', '--config', CMAKE_BUILD_TYPE, '--target', 'python-triton'] + build_args, cwd=self.build_temp)
 
         # The autocomplete file has to be built separately.
         if (is_cmake_true(python_autocomplete_value)):
-            subprocess.check_call(['cmake', '--build', '.', '--config', 'Release', '--target', 'python_autocomplete'], cwd=self.build_temp)
+            subprocess.check_call(['cmake', '--build', '.', '--config', CMAKE_BUILD_TYPE, '--target', 'python_autocomplete'], cwd=self.build_temp)
 
     def copy_extension_to_source(self, ext):
         fullname = self.get_ext_fullname(ext.name)
@@ -172,7 +202,10 @@ class CMakeBuild(build_ext):
             src_filename = os.path.join(self.build_temp + '/src/libtriton', 'libtriton.dylib')
             dst_filename = os.path.join(self.build_lib, os.path.basename(filename))
         elif platform.system() == "Windows":
-            src_filename = os.path.join(self.build_temp + '\\src\\libtriton\\Release', 'triton.pyd')
+            if BUILDTOOLS == vs2022:
+                src_filename = os.path.join(self.build_temp + '/src/libtriton/' + CMAKE_BUILD_TYPE, 'triton.pyd')
+            else:
+                src_filename = os.path.join(self.build_temp + '/src/libtriton', 'triton.pyd')
             dst_filename = os.path.join(self.build_lib, os.path.basename(filename))
         else:
             raise Exception(f'Platform not supported: {platform.system()}')

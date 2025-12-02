@@ -17,6 +17,13 @@ RUN yum install -y \
         libzstd-devel \
         ncurses-devel
 
+ENV VIRTUAL_ENV=/Triton-venv
+RUN python3.10 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN . $VIRTUAL_ENV/bin/activate && \
+    pip install --upgrade pip
+
 RUN python3.10 -m pip install meson
 
 ENV DEPENDENCIES_DIR=/tmp/triton-dependencies
@@ -25,6 +32,25 @@ ENV SOURCE_DIR=/src
 # Create directory for dependencies.
 RUN mkdir -p $DEPENDENCIES_DIR
 
+# Download, build and install GMP.
+RUN echo "[+] Download, build and install GMP" && \
+    cd $DEPENDENCIES_DIR && \
+    curl -LO https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz && \
+    tar xf gmp-6.3.0.tar.xz && \
+    cd gmp-6.3.0 && \
+    ./configure --disable-assembly --enable-cxx && \
+    make -j$(nproc) && \
+    make install
+
+
+RUN echo "[+] Download, build and install mpfr" && \
+    cd $DEPENDENCIES_DIR && \
+    curl -LO https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.1.tar.xz && \
+    tar xf mpfr-4.2.1.tar.xz && \
+    cd mpfr-4.2.1 && \
+    ./configure && \
+    make -j$(nproc) && make install
+    
 # Download, build and install Bitwuzla.
 RUN echo "[+] Download, build and install Bitwuzla" && \
     cd $DEPENDENCIES_DIR && \
