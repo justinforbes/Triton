@@ -4,9 +4,8 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    # macos-13 = x86
-    # macos-14 = arm (M1)
-    runs-on: macos-14
+    # macos-26 = arm64
+    runs-on: macos-26
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
