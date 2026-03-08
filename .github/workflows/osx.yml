@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Deps
         run: |
-          brew install gmp pkgconfig ninja libiconv
+          brew install gmp pkgconfig ninja
 
       - name: Install Meson
         run: |
@@ -41,8 +41,9 @@ jobs:
 
       - name: Install Bitwuzla
         run: |
-          git clone https://github.com/bitwuzla/bitwuzla.git
-          cd bitwuzla
+          wget -q https://github.com/bitwuzla/bitwuzla/archive/refs/tags/0.8.2.tar.gz
+          tar -xf ./0.8.2.tar.gz
+          cd bitwuzla-0.8.2
           python ./configure.py --shared --prefix $(pwd)/install
           cd build
           sudo ninja install
