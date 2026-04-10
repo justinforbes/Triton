@@ -1,0 +1,77 @@
+name: Install Triton dependencies (Windows)
+
+description: Installs all dependencies required to build and test Triton on Windows
+
+inputs:
+  python-version:
+    description: Python version to use
+    default: '3.11'
+  llvm-version:
+    description: LLVM version to install
+    default: '17'
+  capstone-version:
+    description: Capstone version to install
+    default: '5.0.7'
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Upgrade pip
+      run: |
+        python -m pip install -U pip
+      shell: pwsh
+
+    - name: Install Python build dependencies
+      run: |
+        python -m pip install setuptools importlib-resources build
+      shell: pwsh
+
+    - name: Get CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Setup MSVC dev environment
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Install LLVM
+      uses: KyleMayes/install-llvm-action@v2
+      with:
+        version: ${{ inputs.llvm-version }}
+        directory: ${{ runner.temp }}/llvm
+
+    - name: Install z3
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/Z3Prover/z3/releases/download/z3-4.16.0/z3-4.16.0-x64-win.zip" -OutFile "z3-4.16.0-x64-win.zip"
+        tar -xf z3-4.16.0-x64-win.zip
+        echo "Z3_INCLUDE_DIRS=$env:GITHUB_WORKSPACE\z3-4.16.0-x64-win\include" >> $env:GITHUB_ENV
+        echo "Z3_LIBRARIES=$env:GITHUB_WORKSPACE\z3-4.16.0-x64-win\bin\libz3.lib" >> $env:GITHUB_ENV
+        echo "Z3_BIN_DIR=$env:GITHUB_WORKSPACE\z3-4.16.0-x64-win\bin" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Install Capstone
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/capstone-engine/capstone/archive/refs/tags/${{ inputs.capstone-version }}.zip" -OutFile "capstone-${{ inputs.capstone-version }}.zip"
+        tar -xf capstone-${{ inputs.capstone-version }}.zip
+        mkdir capstone-${{ inputs.capstone-version }}\build
+        cd capstone-${{ inputs.capstone-version }}\build
+        cmake `
+            -DCAPSTONE_INSTALL=On `
+            -DBUILD_SHARED_LIBS=On `
+            ..
+        cmake --build . --config Release --parallel 3
+        cmake --install . --config Release
+        echo "CAPSTONE_INCLUDE_DIRS=$env:GITHUB_WORKSPACE\capstone-${{ inputs.capstone-version }}\include" >> $env:GITHUB_ENV
+        echo "CAPSTONE_LIBRARIES=$env:GITHUB_WORKSPACE\capstone-${{ inputs.capstone-version }}\build\Release\capstone.lib" >> $env:GITHUB_ENV
+        echo "CAPSTONE_BIN_DIR=$env:GITHUB_WORKSPACE\capstone-${{ inputs.capstone-version }}\build\Release" >> $env:GITHUB_ENV
+      shell: pwsh
+
+    - name: Install Unicorn and LIEF
+      run: |
+        python -m pip install unicorn lief
+      shell: pwsh
