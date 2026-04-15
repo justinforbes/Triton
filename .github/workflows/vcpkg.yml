@@ -1,4 +1,4 @@
-name: Test the VCPKG install
+name: Build VCPKG package
 
 on: [push, pull_request, workflow_dispatch]
 
