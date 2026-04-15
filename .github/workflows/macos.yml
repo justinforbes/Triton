@@ -1,4 +1,4 @@
-name: Tests on OSX
+name: Tests on macOS
 
 on: [push, pull_request, workflow_dispatch]
 
