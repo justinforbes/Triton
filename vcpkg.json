@@ -15,6 +15,7 @@
         "z3"
     ],
     "overrides": [
-        { "name":"capstone", "version-semver":"5.0.1", "port-version": 1 }
+        { "name":"capstone", "version-semver":"5.0.7" },
+        { "name": "z3", "version": "4.16.0" }
     ]
 }

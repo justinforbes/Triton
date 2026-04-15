@@ -1,13 +1,13 @@
-name: Code coverage
+name: Tests on macOS
 
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.14]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - name: Checkout Triton repository
         uses: actions/checkout@v6
@@ -18,29 +18,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Triton dependencies
-        uses: ./.github/actions/install-triton-deps/linux
+        uses: ./.github/actions/install-triton-deps/macos
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install lcov
-        run: |
-          sudo apt-get install -y lcov
 
       - name: Compile Triton
         run: |
           mkdir ./build
           cd ./build
-          cmake -DGCOV=ON \
-                -DZ3_INTERFACE=ON \
+          cmake -DZ3_INTERFACE=ON \
+                -DZ3_INCLUDE_DIRS=${{ env.Z3_INCLUDE_DIRS }} \
+                -DZ3_LIBRARIES=${{ env.Z3_LIBRARIES }} \
                 -DBITWUZLA_INTERFACE=ON \
                 -DBITWUZLA_INCLUDE_DIRS=${{ env.BITWUZLA_INCLUDE_DIRS }} \
                 -DBITWUZLA_LIBRARIES=${{ env.BITWUZLA_LIBRARIES }} \
                 -DLLVM_INTERFACE=ON \
                 -DCMAKE_PREFIX_PATH=${{ env.LLVM_PATH }} \
-                ..
-          sudo make -j$(nproc) install
+                -DBOOST_INTERFACE=OFF ..
+          sudo make -j$(sysctl -n hw.ncpu) install
 
       - name: Run tests
         run: |
-          make -C build check
-          bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+          DYLD_LIBRARY_PATH=${{ env.DYLD_LIBRARY_PATH }}:/usr/local/lib ctest --test-dir build --output-on-failure
