@@ -147,17 +147,19 @@ jobs:
           LLVM_INTERFACE: ON
           CMAKE_PREFIX_PATH: ${{ env.LLVM_PATH }}
           BOOST_INTERFACE: OFF
+          CAPSTONE_INCLUDE_DIRS: ${{ env.CAPSTONE_INCLUDE_DIRS }}
+          CAPSTONE_LIBRARIES: ${{ env.CAPSTONE_LIBRARIES }}
           MACOSX_DEPLOYMENT_TARGET: "15.0"
 
       - name: Test wheel package
         run: |
           pip install wheelhouse/default_arm64/triton_library-${{ env.package-version }}-${{ matrix.pycp }}-macosx_15_0_universal2.whl
-          pip install capstone lief unicorn z3-solver
+          pip install lief unicorn
           python -c "import triton; print('triton imported successfully')"
           cd ${{ github.workspace }}/src/testers
           python -m unittest discover -b -v unittests
         env:
-          DYLD_LIBRARY_PATH: ${{ env.DYLD_LIBRARY_PATH }}:/opt/homebrew/lib:/usr/local/lib
+          DYLD_LIBRARY_PATH: ${{ env.Z3_LIB_DIR }}:${{ env.BITWUZLA_LIB_DIR }}:${{ env.CAPSTONE_LIB_DIR }}
 
       - name: Upload wheel package
         uses: actions/upload-artifact@v7

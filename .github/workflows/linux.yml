@@ -25,9 +25,8 @@ jobs:
 
       - name: Compile Triton
         run: |
-          mkdir ./build
-          cd ./build
-          cmake -DZ3_INTERFACE=ON \
+          cmake -B build \
+                -DZ3_INTERFACE=ON \
                 -DZ3_INCLUDE_DIRS=${{ env.Z3_INCLUDE_DIRS }} \
                 -DZ3_LIBRARIES=${{ env.Z3_LIBRARIES }} \
                 -DBITWUZLA_INTERFACE=ON \
@@ -36,9 +35,11 @@ jobs:
                 -DLLVM_INTERFACE=ON \
                 -DCMAKE_PREFIX_PATH=${{ env.LLVM_PATH }} \
                 -DBOOST_INTERFACE=${{ matrix.boost-interface }} \
-                ..
-          sudo make -j$(nproc) install
+                -DCAPSTONE_INCLUDE_DIRS=${{ env.CAPSTONE_INCLUDE_DIRS }} \
+                -DCAPSTONE_LIBRARIES=${{ env.CAPSTONE_LIBRARIES }}
+          cmake --build build --config Release --parallel 2
+          cmake --install build --config Release --prefix install
 
       - name: Run tests
         run: |
-          ctest --test-dir build --output-on-failure
+          ctest --test-dir build --output-on-failure -C Release

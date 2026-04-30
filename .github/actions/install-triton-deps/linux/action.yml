@@ -8,7 +8,7 @@ inputs:
     default: '3.11'
   llvm-version:
     description: LLVM version to install
-    default: '17'
+    default: '19'
   bitwuzla-version:
     description: Bitwuzla version to install
     default: '0.9.0'
@@ -36,7 +36,7 @@ runs:
 
     - name: Install Python build dependencies
       run: |
-        python -m pip install setuptools importlib-resources meson
+        python -m pip install setuptools importlib-resources build meson
       shell: bash
 
     - name: Install Bitwuzla dependencies
@@ -68,12 +68,11 @@ runs:
         wget -q https://github.com/bitwuzla/bitwuzla/archive/refs/tags/${{ inputs.bitwuzla-version }}.tar.gz
         tar -xf ${{ inputs.bitwuzla-version }}.tar.gz
         cd bitwuzla-${{ inputs.bitwuzla-version }}
-        python ./configure.py --shared
+        python ./configure.py --shared --prefix $(pwd)/install
         cd build
-        sudo ninja install
-        sudo ldconfig
-        echo "BITWUZLA_INCLUDE_DIRS=/usr/local/include" >> $GITHUB_ENV
-        echo "BITWUZLA_LIBRARIES=/usr/local/lib/x86_64-linux-gnu/libbitwuzla.so" >> $GITHUB_ENV
+        ninja install
+        echo "BITWUZLA_INCLUDE_DIRS=$GITHUB_WORKSPACE/bitwuzla-${{ inputs.bitwuzla-version }}/install/include" >> $GITHUB_ENV
+        echo "BITWUZLA_LIBRARIES=$GITHUB_WORKSPACE/bitwuzla-${{ inputs.bitwuzla-version }}/install/lib/x86_64-linux-gnu/libbitwuzla.so" >> $GITHUB_ENV
       shell: bash
 
     - name: Install Capstone
@@ -81,8 +80,18 @@ runs:
         wget -q https://github.com/capstone-engine/capstone/releases/download/5.0.7/capstone-${{ inputs.capstone-version }}.tar.xz
         tar -xf capstone-${{ inputs.capstone-version }}.tar.xz
         cd capstone-${{ inputs.capstone-version }}
-        bash ./make.sh
-        sudo make install
+        cmake -B build \
+          -DCAPSTONE_ARCHITECTURE_DEFAULT=OFF \
+          -DCAPSTONE_ARM_SUPPORT=ON \
+          -DCAPSTONE_ARM64_SUPPORT=ON \
+          -DCAPSTONE_X86_SUPPORT=ON \
+          -DCAPSTONE_RISCV_SUPPORT=ON \
+          -DBUILD_SHARED_LIBS=ON \
+          -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release --parallel
+        cmake --install build --config Release --prefix install
+        echo "CAPSTONE_INCLUDE_DIRS=$GITHUB_WORKSPACE/capstone-${{ inputs.capstone-version }}/install/include" >> $GITHUB_ENV
+        echo "CAPSTONE_LIBRARIES=$GITHUB_WORKSPACE/capstone-${{ inputs.capstone-version }}/install/lib/libcapstone.so" >> $GITHUB_ENV
       shell: bash
 
     - name: Install Unicorn and LIEF

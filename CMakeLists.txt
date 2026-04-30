@@ -192,6 +192,32 @@ if(LLVM_INTERFACE)
         else()
             set(LLVM_LIBRARIES ${LLVM_AVAILABLE_LIBS})
         endif()
+        # LLVM 18+ Linux prebuilts are compiled without exception handling and
+        # propagate -fno-exceptions via INTERFACE_COMPILE_OPTIONS. Since those
+        # options are applied after Triton's own compile flags in the compiler
+        # command (last-flag-wins), they would override Triton's exceptions. Strip them.
+        if(NOT MSVC AND LLVM_VERSION_MAJOR GREATER_EQUAL 18)
+            foreach(_lib IN ITEMS LLVM ${LLVM_AVAILABLE_LIBS})
+                if(TARGET ${_lib})
+                    get_target_property(_opts ${_lib} INTERFACE_COMPILE_OPTIONS)
+                    if(_opts)
+                        list(REMOVE_ITEM _opts -fno-exceptions -fno-rtti)
+                        set_target_properties(${_lib} PROPERTIES INTERFACE_COMPILE_OPTIONS "${_opts}")
+                    endif()
+                endif()
+            endforeach()
+        endif()
+        # LLVM 19+ Linux prebuilts ship static archives compiled with thin LTO.
+        # They contain LLVM bitcode rather than ELF objects, which GNU ld cannot
+        # link. lld handles thin-LTO archives transparently; force it here.
+        # Note: only static-archive builds (not dylib) on LLVM 19+; older
+        # distro-packaged LLVMs use plain ELF archives and may not have lld.
+        if(CMAKE_SYSTEM_NAME MATCHES "Linux"
+                AND NOT "$CACHE{LLVM_LINK_LLVM_DYLIB}"
+                AND LLVM_VERSION_MAJOR GREATER_EQUAL 19)
+            add_link_options(-B${LLVM_TOOLS_BINARY_DIR} -fuse-ld=lld)
+            message(STATUS "Using lld for thin-LTO static archives")
+        endif()
     endif()
     include_directories(${LLVM_INCLUDE_DIRS})
     set(TRITON_LLVM_INTERFACE ON)

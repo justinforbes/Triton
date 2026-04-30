@@ -23,7 +23,7 @@ VERSION_PATCH = 0
 ON = "ON"
 OFF = "OFF"
 
-clang = "clang" 
+clang = "clang"
 clang_cl = "clang_cl"
 vs2022 = "vs2022"
 Release = "Release"
@@ -105,9 +105,7 @@ class CMakeBuild(build_ext):
 
         elif platform.system() == "Windows":
             if BUILDTOOLS == vs2022:
-                cmake_args += [
-                    "-G Visual Studio 17 2022",
-                ]
+                cmake_args += []
                 build_args += ["--", "/m:4"]
             else:
                 assert os.getenv('COMPILER_DIR'), "COMPILER_DIR(clang or clang_cl) env not found"
