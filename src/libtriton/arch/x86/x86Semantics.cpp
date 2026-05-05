@@ -12138,6 +12138,19 @@ namespace triton {
         /* Spread taint */
         expr->isTainted = this->taintEngine->taintAssignment(dst, src);
 
+        /* Update symbolic flags */
+        this->clearFlag_s(inst, this->architecture->getRegister(ID_REG_X86_OF),
+                          "Clears overflow flag");
+        this->clearFlag_s(inst, this->architecture->getRegister(ID_REG_X86_SF),
+                          "Clears sign flag");
+        this->clearFlag_s(inst, this->architecture->getRegister(ID_REG_X86_AF),
+                          "Clears auxiliary flag");
+        this->clearFlag_s(inst, this->architecture->getRegister(ID_REG_X86_CF),
+                          "Clears carry flag");
+        this->clearFlag_s(inst, this->architecture->getRegister(ID_REG_X86_PF),
+                          "Clears parity flag");
+        this->zf_s(inst, expr, dst, true);
+
         /* Update the symbolic control flow */
         this->controlFlow_s(inst);
       }
